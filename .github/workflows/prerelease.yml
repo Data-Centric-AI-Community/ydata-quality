@@ -25,7 +25,7 @@ jobs:
     needs: prepare
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup Python 3.7
       uses: actions/setup-python@v4
