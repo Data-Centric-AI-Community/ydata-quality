@@ -1,6 +1,6 @@
 dython==0.6.7
 matplotlib==3.4.2
-numpy==1.20.3
+numpy==1.22.0
 pandas==1.2.*
 pydantic==1.8.2
 scikit-learn==0.24.2
