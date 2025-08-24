@@ -48,20 +48,20 @@ class StringEnum(Enum):
         if isinstance(value, str):
             upper_value = value.upper()
 
-            key = StringEnum._key_from_str_(upper_value)
+            key = StringEnum._find_key(upper_value)
             if key is not None:
                 return key
 
             lower_value = value.lower()
 
-            key = StringEnum._key_from_str_(lower_value)
+            key = StringEnum._find_key(lower_value)
             if key is not None:
                 return key
 
         raise ValueError(f"{value} is not a valid {cls.__name__}")
 
     @classmethod
-    def _key_from_str_(cls, value: str):
+    def _find_key(cls, value: str):
         if value in cls.__members__:
             return cls(value)
 
