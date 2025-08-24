@@ -2,12 +2,13 @@
 Implementation of BiasFairness engine to run bias and fairness analysis.
 """
 
-from typing import List, Optional
-
+from typing import Dict, List, Optional, Union
+import numpy as np
 from pandas import DataFrame, Series
-from dython.nominal import compute_associations
+from dython.nominal import associations
+from sklearn.cluster import KMeans
 
-from src.ydata_quality.core.warnings import Priority
+from ..core.warnings import Priority
 
 from ..core import QualityEngine, QualityWarning
 from ..utils.correlations import filter_associations
@@ -43,6 +44,41 @@ class BiasFairness(QualityEngine):
     def sensitive_features(self):
         "Returns a list of sensitive features."
         return self._sensitive_features
+        
+    def _analyze_numerical_representativity(self, feature: str, n_clusters: int = 5, threshold: float = 0.2) -> Dict:
+        """Analyzes representativity of numerical sensitive features using clustering.
+        
+        Args:
+            feature: Name of the numerical feature to analyze
+            n_clusters: Number of clusters for grouping
+            threshold: Maximum allowed representativity difference between clusters
+            
+        Returns:
+            Dict with cluster analysis results
+        """
+        data = self.df[[feature]].copy()
+        
+        # Handle NaN values
+        data = data.dropna()
+        if len(data) == 0:
+            return None
+            
+        # Perform clustering
+        kmeans = KMeans(n_clusters=n_clusters, random_state=self._random_state)
+        clusters = kmeans.fit_predict(data)
+        
+        # Calculate cluster proportions
+        proportions = np.bincount(clusters) / len(clusters)
+        
+        # Check for disproportionate representation
+        max_diff = np.max(proportions) - np.min(proportions)
+        
+        return {
+            'cluster_proportions': proportions.tolist(),
+            'max_difference': max_diff,
+            'is_disproportionate': max_diff > threshold,
+            'cluster_centers': kmeans.cluster_centers_.flatten().tolist()
+        }
 
     def proxy_identification(self, th=0.5):
         """Tests for non-protected features high correlation with sensitive attributes.
@@ -54,7 +90,7 @@ class BiasFairness(QualityEngine):
         # TODO: multiple thresholds per association type (num/num, num/cat, cat/cat)
 
         # Compute association measures for sensitive features
-        corrs = compute_associations(self.df, num_num_assoc='pearson', nom_nom_assoc='cramer')
+        corrs = associations(self.df, num_num_assoc='pearson', nom_nom_assoc='cramer', compute_only=True)['corr']
         corrs = filter_associations(corrs, th=th, name='association', subset=self.sensitive_features)
 
         if len(corrs) > 0:
@@ -108,31 +144,60 @@ class BiasFairness(QualityEngine):
             res[feat] = Series(performance_per_feature_values(df=self.df, feature=feat, label=self.label))
         return res
 
-    def sensitive_representativity(self, min_pct: float = 0.01):
-        """Checks categorical sensitive attributes minimum representativity of feature values.
+    def sensitive_representativity(self, min_pct: float = 0.01, n_clusters: int = 5, num_threshold: float = 0.2):
+        """Checks sensitive attributes representativity for both categorical and numerical features.
 
-        Raises a warning if a feature value of a categorical sensitive attribute is not represented above a min_pct \
-percentage.
+        For categorical features:
+            Raises a warning if a feature value is not represented above a min_pct percentage.
+            
+        For numerical features:
+            Uses clustering to group values and checks if clusters have balanced representation.
+            Raises a warning if the difference in cluster sizes exceeds the threshold.
+
+        Args:
+            min_pct: Minimum percentage for categorical feature values
+            n_clusters: Number of clusters for numerical features
+            num_threshold: Maximum allowed difference in cluster sizes for numerical features
         """
-        # TODO: Representativity for numerical features
         res = {}
-        categorical_sensitives = [
-            k for (
-                k,
-                v) in self.dtypes.items() if (
-                v == 'categorical') & (
-                k in self.sensitive_features)]
-        for cat in categorical_sensitives:
-            dist = self.df[cat].value_counts(normalize=True)  # normalized presence of feature values
-            res[cat] = dist  # store the distribution
-            low_dist = dist[dist < min_pct]  # filter for low representativity
-            if len(low_dist) > 0:
-                self.store_warning(
-                    QualityWarning(
-                        test=QualityWarning.Test.SENSITIVE_ATTRIBUTE_REPRESENTATIVITY,
-                        category=QualityWarning.Category.BIAS_FAIRNESS, priority=Priority.P2, data=low_dist,
-                        description=f"Found {len(low_dist)} values of '{cat}' \
+        
+        for feature in self.sensitive_features:
+            if self.dtypes[feature] == 'categorical':
+                # Handle categorical features
+                dist = self.df[feature].value_counts(normalize=True)
+                res[feature] = {'type': 'categorical', 'distribution': dist}
+                
+                low_dist = dist[dist < min_pct]
+                if len(low_dist) > 0:
+                    self.store_warning(
+                        QualityWarning(
+                            test=QualityWarning.Test.SENSITIVE_ATTRIBUTE_REPRESENTATIVITY,
+                            category=QualityWarning.Category.BIAS_FAIRNESS,
+                            priority=Priority.P2,
+                            data=low_dist,
+                            description=f"Found {len(low_dist)} values of '{feature}' \
 sensitive attribute with low representativity in the dataset (below {min_pct*100:.2f}%)."
+                        )
                     )
+            else:
+                # Handle numerical features
+                cluster_analysis = self._analyze_numerical_representativity(
+                    feature, n_clusters=n_clusters, threshold=num_threshold
                 )
+                
+                if cluster_analysis:
+                    res[feature] = {'type': 'numerical', 'cluster_analysis': cluster_analysis}
+                    
+                    if cluster_analysis['is_disproportionate']:
+                        self.store_warning(
+                            QualityWarning(
+                                test=QualityWarning.Test.SENSITIVE_ATTRIBUTE_REPRESENTATIVITY,
+                                category=QualityWarning.Category.BIAS_FAIRNESS,
+                                priority=Priority.P2,
+                                data=cluster_analysis,
+                                description=f"Numerical sensitive attribute '{feature}' shows disproportionate \
+representation across value ranges. Maximum difference between cluster sizes: {cluster_analysis['max_difference']:.2f}"
+                            )
+                        )
+        
         return res
