@@ -37,6 +37,3 @@ class TestBiasFairness:
         )
         correlations = bf.proxy_identification(th=0.5)
         assert len(correlations) >= 0
-
-
-
