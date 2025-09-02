@@ -7,6 +7,7 @@ from itertools import combinations
 from typing import List, Optional
 
 from matplotlib.pyplot import figure as pltfigure, show as pltshow
+import numpy as np
 from numpy import (
     nan,
     fill_diagonal,
@@ -55,8 +56,9 @@ def filter_associations(corrs: DataFrame, th: float,
     Returns
         corrs (Series): map of feature_pair to association metric value, filtered
     """
+    corrs = corrs if isinstance(corrs, DataFrame) else DataFrame(corrs)  # convert to DataFrame if needed
     corrs = corrs.copy()  # keep original
-    fill_diagonal(corrs.values, nan)  # remove the same column pairs
+    np.fill_diagonal(corrs.to_numpy(), nan)  # remove the same column pairs using numpy array
     corrs = corrs[subset] if subset is not None else corrs  # subset features
     corrs = corrs[(corrs > th) | (corrs < -th)].melt(ignore_index=False).reset_index().dropna()  # subset by threshold
     corrs['features'] = ['_'.join(sorted((i.index, i.variable)))

@@ -1,7 +1,7 @@
-dython==0.7.9
-matplotlib==3.10.5
-numpy==2.3.2
-pandas==2.3.2
-pydantic==2.11.7
-scikit-learn==1.7.1
-statsmodels==0.14.5
+dython==0.6.7
+matplotlib==3.4.2
+numpy==1.20.3
+pandas==1.2.*
+pydantic==1.8.2
+scikit-learn==0.24.2
+statsmodels==0.12.2
