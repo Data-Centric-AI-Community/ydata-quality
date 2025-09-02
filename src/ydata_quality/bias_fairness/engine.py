@@ -49,8 +49,7 @@ class BiasFairness(QualityEngine):
 
         Non-sensitive features can serve as proxy for protected attributes, exposing the data to a possible
         subsequent bias in the data pipeline. High association values indicate that alternative features can
-        be used in place of the original sensitive attributes.
-        """
+        be used in place of the original sensitive attributes."""
         # TODO: multiple thresholds per association type (num/num, num/cat, cat/cat)
 
         # Compute association measures for sensitive features

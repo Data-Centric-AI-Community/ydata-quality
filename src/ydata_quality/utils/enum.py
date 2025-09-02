@@ -42,26 +42,35 @@ class OrderedEnum(Enum):
 
 
 class StringEnum(Enum):
+    """Enum that allows case-insensitive string lookup."""
 
     @classmethod
     def _missing_(cls, value):
         if isinstance(value, str):
             upper_value = value.upper()
 
-            key = StringEnum._key_from_str_(upper_value)
+            key = cls.find_member(upper_value)
             if key is not None:
                 return key
 
             lower_value = value.lower()
 
-            key = StringEnum._key_from_str_(lower_value)
+            key = cls.find_member(lower_value)
             if key is not None:
                 return key
 
         raise ValueError(f"{value} is not a valid {cls.__name__}")
 
     @classmethod
-    def _key_from_str_(cls, value: str):
+    def find_member(cls, value: str):
+        """Find an enum member by its string value.
+
+        Args:
+            value: The string value to look up
+
+        Returns:
+            The enum member if found, None otherwise
+        """
         if value in cls.__members__:
             return cls(value)
 
