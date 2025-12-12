@@ -1,5 +1,5 @@
 dython==0.6.7
-matplotlib==3.4.2
+matplotlib==3.10.8
 numpy==1.20.3
 pandas==1.2.*
 pydantic==1.8.2
