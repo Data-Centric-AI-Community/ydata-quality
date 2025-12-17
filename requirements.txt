@@ -1,4 +1,4 @@
-dython==0.6.7
+dython==0.7.12
 matplotlib==3.4.2
 numpy==1.20.3
 pandas==1.2.*
