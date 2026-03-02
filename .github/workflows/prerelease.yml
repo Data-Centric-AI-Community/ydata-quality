@@ -29,7 +29,7 @@ jobs:
     needs: prepare
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Setup Python 3.7
       uses: actions/setup-python@v4
@@ -45,7 +45,7 @@ jobs:
       run: make package PYTHON=python version=${{ steps.version.outputs.value }}
 
     - name: Upload Pipeline Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         retention-days: 1
         name: built-artifacts
@@ -60,7 +60,7 @@ jobs:
     - package
 
     steps:
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: built-artifacts
         path: dist/
@@ -79,7 +79,7 @@ jobs:
     - package
 
     steps:
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: built-artifacts
         path: dist/

@@ -49,15 +49,14 @@ jobs:
 
     steps:
     - name: Create Pre Release
-      uses: actions/create-release@v2
+      uses: softprops/action-gh-release@v2
       env:
-        BUILD: ${{ needs.prepare.outputs.build_number }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VERSION: ${{ needs.prepare.outputs.release }}
       with:
-        tag_name: build/${{ env.VERSION }}/${{ env.BUILD }}
-        release_name: ${{ needs.prepare.outputs.version }}
+        tag_name: build/${{ needs.prepare.outputs.release }}/${{ needs.prepare.outputs.build_number }}
+        name: ${{ needs.prepare.outputs.release }}.${{ needs.prepare.outputs.build_number }}
         body: ${{ github.event.head_commit.message }}
+        target_commitish: master
         prerelease: true
 
   draft-release:
@@ -80,7 +79,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ needs.prepare.outputs.release }}
-        release_name: ${{ needs.prepare.outputs.release }}
+        name: ${{ needs.prepare.outputs.release }}
         body: ${{ needs.prepare.outputs.release_notes }}
         draft: true
 

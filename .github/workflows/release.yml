@@ -18,7 +18,7 @@ jobs:
       version: ${{ steps.version.outputs.value }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Version
       id: version
@@ -38,7 +38,7 @@ jobs:
       run: make package PYTHON=python version=${{ steps.version.outputs.value }}
 
     - name: Upload Pipeline Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         retention-days: 1
         name: built-artifacts
@@ -51,7 +51,7 @@ jobs:
     needs: package
 
     steps:
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: built-artifacts
         path: dist/
@@ -68,7 +68,7 @@ jobs:
     needs: package
 
     steps:
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: built-artifacts
         path: dist/
