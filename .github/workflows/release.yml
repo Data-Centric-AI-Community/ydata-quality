@@ -5,16 +5,20 @@ on:
     types:
     - released
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
   package:
     name: Build and Package
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     outputs:
       version: ${{ steps.version.outputs.value }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Version
       id: version
@@ -34,7 +38,7 @@ jobs:
       run: make package PYTHON=python version=${{ steps.version.outputs.value }}
 
     - name: Upload Pipeline Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         retention-days: 1
         name: built-artifacts
@@ -42,35 +46,31 @@ jobs:
     
   upload-assets:
     name: Upload Assets to Release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     needs: package
 
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: built-artifacts
         path: dist/
 
-    - uses: AButler/upload-release-assets@v2.0
+    - uses: softprops/action-gh-release@v2
       with:
         files: 'dist/*'
-        repo-token: ${{ secrets.ACCESS_TOKEN }}
-        release-tag: ${{ needs.package.outputs.version }}
+        tag_name: ${{ needs.package.outputs.version }}
 
   publish-pypi:
     name: Publish packages to PyPi
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     needs: package
 
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: built-artifacts
         path: dist/
 
-    - uses: pypa/gh-action-pypi-publish@v1.6.4
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
+    - uses: pypa/gh-action-pypi-publish@release/v1
