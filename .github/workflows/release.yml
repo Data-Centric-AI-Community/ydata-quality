@@ -12,13 +12,13 @@ permissions:
 jobs:
   package:
     name: Build and Package
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     outputs:
       version: ${{ steps.version.outputs.value }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Version
       id: version
@@ -38,7 +38,7 @@ jobs:
       run: make package PYTHON=python version=${{ steps.version.outputs.value }}
 
     - name: Upload Pipeline Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         retention-days: 1
         name: built-artifacts
@@ -46,12 +46,12 @@ jobs:
     
   upload-assets:
     name: Upload Assets to Release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     needs: package
 
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: built-artifacts
         path: dist/
@@ -63,12 +63,12 @@ jobs:
 
   publish-pypi:
     name: Publish packages to PyPi
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     needs: package
 
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: built-artifacts
         path: dist/
