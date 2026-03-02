@@ -54,7 +54,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: build/${{ needs.prepare.outputs.release }}/${{ needs.prepare.outputs.build_number }}
-        name: ${{ needs.prepare.outputs.release }}.${{ needs.prepare.outputs.build_number }}
+        name: ${{ needs.prepare.outputs.version }}
         body: ${{ github.event.head_commit.message }}
         target_commitish: master
         prerelease: true
