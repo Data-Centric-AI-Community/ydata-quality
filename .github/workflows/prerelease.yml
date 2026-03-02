@@ -5,6 +5,10 @@ on:
     types:
     - prereleased
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
   prepare:
     name: Prepare
@@ -61,11 +65,10 @@ jobs:
         name: built-artifacts
         path: dist/
 
-    - uses: AButler/upload-release-assets@v2.0
+    - uses: softprops/action-gh-release@v2
       with:
         files: 'dist/*'
-        repo-token: ${{ secrets.ACCESS_TOKEN }}
-        release-tag: ${{ needs.package.outputs.version }}
+        tag_name: ${{ needs.package.outputs.version }}
 
   publish-private-pypi:
     name: Publish packages to PyPi
@@ -81,8 +84,4 @@ jobs:
         name: built-artifacts
         path: dist/
 
-    - uses: pypa/gh-action-pypi-publish@v1.6.4
-      with:
-        user: ${{ secrets.PRIVATE_PYPI_USERNAME }}
-        password: ${{ secrets.PRIVATE_PYPI_PASSWORD }}
-        repository_url: ${{ secrets.PRIVATE_PYPI_URL }}
+    - uses: pypa/gh-action-pypi-publish@release/v1
